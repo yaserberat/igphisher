@@ -448,6 +448,8 @@ async def kill_tunnel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await edit_with_back(query, "⚠️ **Tunnel kapatma denendi ama tam kapanmayabilir.**\n`pkill -9 cloudflared` dene.", kb)
 
 # Komutlar (add_user, remove_user, status aynı kalabilir)
+async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("✅ Bot çalışıyor!")
 async def cmd_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != str(ADMIN_ID): return
     if not context.args:
