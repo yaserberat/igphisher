@@ -471,7 +471,35 @@ async def cmd_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ **{display}** premium yapıldı!")
 
 # ... cmd_remove_user, cmd_status aynı kalabilir (önceki mesajlardan kopyala)
+async def cmd_remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.effective_user.id) != str(ADMIN_ID):
+        return
 
+    if not context.args:
+        await update.message.reply_text("❌ Kullanım: `/remove_user 123456` veya `/remove_user @username`")
+        return
+
+    arg = context.args[0].strip()
+
+    if arg.startswith('@'):
+        username = arg[1:]
+        uid_to_remove = username
+        display = f"@{username}"
+    else:
+        try:
+            uid_to_remove = int(arg)
+            display = str(uid_to_remove)
+        except ValueError:
+            await update.message.reply_text("❌ Geçersiz!")
+            return
+
+    removed = premium_users.discard(str(uid_to_remove))
+    save_users()
+
+    if removed:
+        await update.message.reply_text(f"✅ **{display}** premium'dan kaldırıldı!")
+    else:
+        await update.message.reply_text(f"ℹ️ **{display}** zaten premium değil.")
 # ═══════════════════════════════════════════════════════════════ MAIN
 def cleanup_loop():
     while True:
