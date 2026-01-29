@@ -343,7 +343,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "tunnel":
         await create_tunnel(query, user_id)
 
-elif query.data.startswith("kill_"):
+    elif query.data.startswith("kill_"):
         await kill_tunnel(update, context)
 
 async def create_tunnel(query, user_id):
