@@ -341,7 +341,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, parse_mode='Markdown')
 
     elif query.data == "tunnel":
-        await create_tunnel(query, user_id)
+    await create_tunnel(query, user_id)
+
+elif query.data.startswith("kill_"):
+    await kill_tunnel(update, context)
 
 async def create_tunnel(query, user_id):
     if user_id in active_tunnels:
