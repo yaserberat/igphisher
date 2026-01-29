@@ -470,7 +470,6 @@ async def cmd_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_users()
     await update.message.reply_text(f"✅ **{display}** premium yapıldı!")
 
-# ... cmd_remove_user, cmd_status aynı kalabilir (önceki mesajlardan kopyala)
 async def cmd_remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != str(ADMIN_ID):
         return
