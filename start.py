@@ -420,7 +420,6 @@ def start_cloudflare_tunnel(port):
         print(f"❌ Cloudflared error: {e}")
         return None, None
 
-# ═══════════════════════════════════════════════════════════════ YARDIMCI FONKSİYON
 async def edit_with_back(query, text, kb=None, parse_mode='Markdown'):
     back_kb = [[InlineKeyboardButton("🔙 Geri", callback_data="back_to_start")]]
     if kb:
@@ -428,7 +427,6 @@ async def edit_with_back(query, text, kb=None, parse_mode='Markdown'):
     reply_markup = InlineKeyboardMarkup(back_kb)
     await query.edit_message_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
 
-# ═══════════════════════════════════════════════════════════════ KOMUTLAR
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
@@ -505,7 +503,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 display = f"`@{u}` (username)"
             users_list.append(f"• {display}")
         users_list = "\n".join(users_list) if users_list else "• Yok"
-        text = f"📋 *Premium Users:*\n{users_list}\n\n*Kullan:* `/add_user 123456` veya `/add_user @username`"
+        text = f"📋 *Premium Users:*\n{users_list}\n\n*Kullan:* `/add_user 123456` veya `/add_user @username`\n`/remove_user 123456` veya `/remove_user @username`"
         await edit_with_back(query, text)
 
     elif query.data == "my_captures":
@@ -717,10 +715,10 @@ async def cmd_remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Geçersiz!")
             return
 
-    removed = premium_users.discard(str(uid_to_remove))
-    save_users()
-
-    if removed:
+    uid_str = str(uid_to_remove)
+    if uid_str in premium_users:
+        premium_users.remove(uid_str)
+        save_users()
         await update.message.reply_text(f"✅ **{display}** premium'dan kaldırıldı!")
     else:
         await update.message.reply_text(f"ℹ️ **{display}** zaten premium değil.")
@@ -800,4 +798,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n👋 Bot kapatıldı!")
- 
