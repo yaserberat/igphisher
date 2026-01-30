@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 import os
@@ -12,7 +11,6 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 
 nest_asyncio.apply()
 
-# ═══════════════════════════════════════════════════════════════
 BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"
 ADMIN_ID = 7999336769
 
@@ -468,7 +466,33 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(query.from_user.id)
 
     if query.data == "back_to_start":
-        await start_cmd(update, context)
+        keyboard = []
+        if user_id == str(ADMIN_ID):
+            keyboard = [
+                [InlineKeyboardButton("👥 Kullanıcı Yönetimi", callback_data="manage")],
+                [InlineKeyboardButton("📊 Benim Captures", callback_data="my_captures")],
+                [InlineKeyboardButton("🌐 Tüm Captureler", callback_data="all_captures")],
+                [InlineKeyboardButton("🗑️ Benim Capture'leri Sıfırla", callback_data="reset_my")],
+                [InlineKeyboardButton("🗑️ Tüm Capture'leri Sıfırla", callback_data="reset_all")],
+                [InlineKeyboardButton("🔗 Benim Tunnel", callback_data="tunnel")]
+            ]
+        elif user_id in premium_users:
+            keyboard = [
+                [InlineKeyboardButton("🔗 Tunnel Başlat", callback_data="tunnel")],
+                [InlineKeyboardButton("📊 Benim Son 5 Capture", callback_data="my_captures")],
+                [InlineKeyboardButton("🗑️ Capture'lerimi Sıfırla", callback_data="reset_my")]
+            ]
+        else:
+            await query.edit_message_text("❌ Premium değilsin!")
+            return
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        text = (
+            "🚀 *IGCap Premium Bot*\n\n"
+            f"👤 `{query.from_user.first_name}`\n"
+            "Seçiminizi yapın:"
+        )
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
         return
 
     if query.data == "manage" and user_id == str(ADMIN_ID):
@@ -776,3 +800,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n👋 Bot kapatıldı!")
+ 
