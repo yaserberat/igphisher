@@ -14,7 +14,7 @@ nest_asyncio.apply()
 BOT_TOKEN = "8366855341:AAHauyMwWYcruSFAddfTwnlGdcs1UKWyFuo"
 ADMIN_ID = 7999336769
 
-PORT_RANGE = list(range(8000, 8200))  # 200 port (8000'den 8199'a kadar)
+PORT_RANGE = list(range(8000, 9000))  # 1000 port (8000'den 9000'a kadar)
 USERS_FILE = "premium_users.json"
 CAPTURES_DIR = "captures"
 
