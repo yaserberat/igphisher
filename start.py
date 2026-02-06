@@ -84,6 +84,7 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
   height: 51px;
   display: block;
   margin: 0 auto;
+  filter: invert(1); /* beyazı siyaha çevirir */
 }
     .input-group {
       margin-bottom: 14px;
