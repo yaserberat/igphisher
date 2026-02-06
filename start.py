@@ -77,15 +77,13 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     .logo {
-      font-family: 'Billabong', cursive;
-      font-size: 3.25rem;
-      line-height: 0.95;
-      letter-spacing: -2.5px;
-      margin: 0 0 24px;
-      color: #262626;
-      font-weight: normal;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    }
+  font-family: 'Billabong', cursive;
+  font-size: 3.5rem;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #262626;
+  font-weight: normal;
+}
     .input-group {
       margin-bottom: 14px;
     }
