@@ -81,7 +81,9 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
   text-align: center;
 }
 .logo img {
-  height: 51px; /* Instagram login sayfasındaki boyuta yakın */
+  height: 51px;
+  display: block;
+  margin: 0 auto;
 }
     .input-group {
       margin-bottom: 14px;
