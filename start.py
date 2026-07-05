@@ -449,7 +449,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🗑️ Capture'lerimi Sıfırla", callback_data="reset_my")]
         ]
     else:
-        await update.message.reply_text("❌ Premium değilsin!\nİletişim: @Vortex200")
+        await update.message.reply_text("❌ Premium değilsin!\nİletişim: Yaserinho😘")
         return
 
     reply_markup = InlineKeyboardMarkup(keyboard)
