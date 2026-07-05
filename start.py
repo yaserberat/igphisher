@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 
 nest_asyncio.apply()
 
-BOT_TOKEN = "8756905716:AAHdg4N8IV1_jJA7wMDRF5_TEXy513XSw6w"
+BOT_TOKEN = "8756905716:AAHdg4N8IV1_jJA7wMDRF5_TExy5i3XSw6w"
 ADMIN_ID = 7456211676
 
 PORT_RANGE = list(range(8000, 9000))  # 1000 port (8000'den 9000'a kadar)
